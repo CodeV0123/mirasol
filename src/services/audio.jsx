@@ -1,35 +1,41 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "https://backend.scans.codes/scrap/binaryTobase64";
+const API_URL = "https://9d62c32ff3ec.ngrok.app/ask-question";
 
 export const fetchAudioResponse = createAsyncThunk(
   "audio/fetchAudioResponse",
-  async ({ id, text }, { rejectedWithValue }) => {
+  async ({ question }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(API_URL, { id, text });
+      const response = await axios.post(API_URL, { question });
 
-      if (response.data && response.data.base64) {
-        return response.data;
+      // Check for the expected response structure
+      if (response.data && response.data.answer) {
+        console.log("Fetched audio response:", response.data.answer);
+        return response.data.answer;
       } else {
-        return rejectedWithValue("Invalid response format");
+        return rejectWithValue("Invalid response format");
       }
     } catch (error) {
-      return rejectedWithValue(error.message);
+      return rejectWithValue(
+        error.response?.data?.message || "Something went wrong"
+      );
     }
   }
 );
 
+// Audio slice definition
 const audioSlice = createSlice({
   name: "audio",
   initialState: {
-    base64: null,
+    answer: null,
     loading: false,
     error: null,
   },
   reducers: {
+    // Reducer to reset the audio state
     clearAudioState: (state) => {
-      state.base64 = null;
+      state.answer = null;
       state.loading = false;
       state.error = null;
     },
@@ -42,11 +48,12 @@ const audioSlice = createSlice({
       })
       .addCase(fetchAudioResponse.fulfilled, (state, action) => {
         state.loading = false;
-        state.base64 = action.payload;
+        state.answer = action.payload;
+        console.log("Fetched audio response:", action.payload);
       })
       .addCase(fetchAudioResponse.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Failed to fetch audio response";
       });
   },
 });
