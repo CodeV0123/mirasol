@@ -14,7 +14,7 @@ const router = createBrowserRouter([
   //   element: <VideoBackground />,
   // },
   {
-    path: "/home",
+    path: "/",
     element: <HomePage />,
   },
 ]);
