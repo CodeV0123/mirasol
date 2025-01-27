@@ -77,7 +77,7 @@ const Loader = ({ children }) => {
             zIndex: 100000000000000,
           }}
         >
-          <img className="w-[300px]  " ref={ref1} src="/bib.png" />
+          <img className="w-screen h-screen" ref={ref1} src="/bib.png" />
           {/* <img className="w-[30px] " ref={ref2} src="/i.svg" />
           <img className="w-[30px] " ref={ref3} src="/b2.svg" />
           <img className="w-[30px] " ref={ref4} src="/l.svg" />
