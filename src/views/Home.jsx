@@ -14,7 +14,7 @@ const Flipbook = ({ file }) => {
   return (
     <div className="w-[100%] h-[100vh]">
       <iframe
-        src={`https://flipbook-rho.vercel.app?query=%22${file}%22`}
+        src={`https://flipbook-rho.vercel.app?query=%22${"https://ovwhrngiaqsxmcbbkpbf.supabase.co/storage/v1/object/public/assets/uploads/Mirasol%20Factsheet-combined%20(3).pdf"}%22`}
         className="w-[100%] h-[100vh]"
       ></iframe>
     </div>
@@ -86,9 +86,9 @@ const Loader = () => {
 };
 
 const HomePage = () => {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [file, setFile] = useState();
-  const [fileId, setFileId] = useState("");
+  const [fileId, setFileId] = useState("asdasd");
   const [loader, setLoader] = useState(false);
 
   // const analyze_documents = async (user_id, files) => {
