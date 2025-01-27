@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Dropzone from "react-dropzone";
 import { createClient } from "@supabase/supabase-js";
-
+import BackgroundVideo from "../layouts/BackgroundVideo";
 import Answer from "./Answer";
 
 const supabase = createClient(
@@ -97,6 +97,7 @@ const HomePage = () => {
 
   return (
     <div className="w-[100%] h-[100vh] bg-[#454545]">
+      <BackgroundVideo />
       {loader && <Loader />}
       {step === 0 && (
         <Dropped

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAudioResponse } from "../services/audio";
 import { Conversation } from "@11labs/client";
-import { FiMic } from "react-icons/fi";
+import { FiMic, FiMicOff } from "react-icons/fi";
 
 const Answer = () => {
   const dispatch = useDispatch();
@@ -13,11 +13,46 @@ const Answer = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [show, setShow] = useState({ show: false, title: "", loading: false });
-  
+  const [isInConversation, setIsInConversation] = useState(false);
 
+  const websocketRef = useRef(null);
+  const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
+
+  const handleConversationToggle = async () => {
+    if (isInConversation) {
+      // End conversation
+      if (websocketRef.current) {
+        websocketRef.current.close();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (conversation) {
+        // If there's a specific method to end the conversation from the library, use it here
+        try {
+          await conversation.stop(); // or whatever method is available
+        } catch (error) {
+          console.log("Conversation cleanup:", error);
+        }
+      }
+      setIsInConversation(false);
+      setIsConnected(false);
+      setIsListening(false);
+      setIsSpeaking(false);
+      setConversation(null);
+    } else {
+      // Start conversation
+      const hasPermission = await requestMicrophonePermission();
+      if (!hasPermission) {
+        return;
+      }
+      setIsInConversation(true);
+      await startConversation();
+    }
+  };
 
   useEffect(() => {
     const audioContext = new (window.AudioContext ||
@@ -72,76 +107,88 @@ const Answer = () => {
   };
 
   const startConversation = async () => {
-    const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream; // Store stream reference for cleanup
+
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+
+      const signedUrl = await getSignedUrl();
+      visualize(analyserRef.current);
+
+      const websocket = new WebSocket(signedUrl);
+      websocketRef.current = websocket; // Store websocket reference for cleanup
+
+      websocket.onopen = () => {
+        setIsConnected(true);
+        console.log("WebSocket connected.");
+      };
+
+      websocket.onmessage = async (event) => {
+        if (event.data instanceof Blob) {
+          const arrayBuffer = await event.data.arrayBuffer();
+          const audioBuffer = await audioContextRef.current.decodeAudioData(
+            arrayBuffer
+          );
+          const source = audioContextRef.current.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(analyserRef.current);
+          source.connect(audioContextRef.current.destination);
+          source.start(0);
+        } else {
+          console.log("Text response:", event.data);
+        }
+      };
+
+      websocket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        alert("An error occurred during the conversation.");
+        handleConversationToggle(); // Clean up on error
+      };
+
+      websocket.onclose = () => {
+        setIsConnected(false);
+        console.log("WebSocket closed.");
+        setIsInConversation(false);
+      };
+
+      const conversationInstance = await Conversation.startSession({
+        signedUrl,
+        onConnect: () => {
+          setIsConnected(true);
+          setIsSpeaking(true);
+        },
+        onDisconnect: () => {
+          setIsConnected(false);
+          setIsSpeaking(false);
+          setIsInConversation(false);
+        },
+        onError: (error) => {
+          console.error("Conversation error:", error);
+          alert("An error occurred during the conversation");
+          handleConversationToggle(); // Clean up on error
+        },
+        onModeChange: ({ mode }) => {
+          setIsListening(mode === "listening");
+          setIsSpeaking(mode === "speaking");
+        },
+      });
+      setConversation(conversationInstance);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+      handleConversationToggle(); // Clean up on error
     }
+  };
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const source = audioContextRef.current.createMediaStreamSource(stream);
-    source.connect(analyserRef.current);
-
-    const signedUrl = await getSignedUrl();
-
-    visualize(analyserRef.current);
-
-    const websocket = new WebSocket(signedUrl);
-
-    websocket.onopen = () => {
-      setIsConnected(true);
-      console.log("WebSocket connected.");
-    };
-
-    websocket.onmessage = async (event) => {
-      if (event.data instanceof Blob) {
-        const arrayBuffer = await event.data.arrayBuffer();
-        const audioBuffer = await audioContextRef.current.decodeAudioData(
-          arrayBuffer
-        );
-        const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffer;
-
-        // Connect to analyser for visualization
-        source.connect(analyserRef.current);
-        source.connect(audioContextRef.current.destination);
-
-        source.start(0);
-      } else {
-        console.log("Text response:", event.data);
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (isInConversation) {
+        handleConversationToggle();
       }
     };
-
-    websocket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      alert("An error occurred during the conversation.");
-    };
-
-    websocket.onclose = () => {
-      setIsConnected(false);
-      console.log("WebSocket closed.");
-    };
-
-    const conversation = await Conversation.startSession({
-      signedUrl,
-      onConnect: () => {
-        setIsConnected(true);
-        setIsSpeaking(true);
-      },
-      onDisconnect: () => {
-        setIsConnected(false);
-        setIsSpeaking(false);
-      },
-      onError: (error) => {
-        console.error("Conversation error:", error);
-        alert("An error occured during the conversation");
-      },
-      onModeChange: ({ mode }) => {
-        setIsListening(mode === "listening");
-        setIsSpeaking(mode === "speaking");
-      },
-    });
-    setConversation(conversation);
-  };
+  }, []);
 
   const visualize = (analyser) => {
     const canvas = canvasRef.current;
@@ -280,12 +327,24 @@ const Answer = () => {
           onKeyDown={(e) => e.key === "Enter" && handleGenerate(input)}
           className="w-[100%] h-[100%] bg-transparent outline-none border-none font-medium px-[14px] text-white"
         />
-        <FiMic
-          className={`cursor-pointer text-white text-[24px] mx-[10px] ${
-            isListening ? "animate-pulse text-[#34b87d]" : ""
-          }`}
-          onClick={startConversation}
-        />
+        <div
+          className="cursor-pointer mx-[10px]"
+          onClick={handleConversationToggle}
+        >
+          {isInConversation ? (
+            <FiMicOff
+              className="text-red-500 text-[24px]"
+              title="End conversation"
+            />
+          ) : (
+            <FiMic
+              className={`text-white text-[24px] ${
+                isListening ? "animate-pulse text-[#34b87d]" : ""
+              }`}
+              title="Start conversation"
+            />
+          )}
+        </div>
         <canvas
           ref={canvasRef}
           width="85"
