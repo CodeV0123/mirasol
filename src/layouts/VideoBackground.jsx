@@ -30,14 +30,14 @@ const VideoBackground = () => {
       <video
         ref={videoRef}
         className="background-video"
-        src="/comexlogo.mp4"
+        src="/MIRASOL.mp4"
         autoPlay
         muted
         loop={false}
       />
       {showButton && (
         <button className="enter-button" onClick={handleEnterClick}>
-          Enter
+          Explore Luxury
         </button>
       )}
     </div>

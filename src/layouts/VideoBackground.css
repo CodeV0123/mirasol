@@ -22,15 +22,17 @@
   padding: 10px 20px;
   font-size: 1.2rem;
   color: white;
-  background-color: #83d7f7; /* Matching Comex blue */
-  border: none;
+  background: linear-gradient(#c5a572, #9e825c);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .enter-button:hover {
-  background-color: #6bc2e4; /* Slightly darker for hover effect */
+  background: linear-gradient(#9e825c, #c5a572);
+  /* transform: translateY(-1px); */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes fadeIn {
