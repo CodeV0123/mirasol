@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Dropzone from "react-dropzone";
 import { createClient } from "@supabase/supabase-js";
-import BackgroundImage from "../layouts/BackgroundVideo";
+import BackgroundImage from "../layouts/BackgroundImage";
 import Answer from "./Answer";
 
 const supabase = createClient(
