@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Dropzone from "react-dropzone";
 import { createClient } from "@supabase/supabase-js";
-import BackgroundImage from "../layouts/BackgroundVideo";
+import BackgroundImage from "../layouts/BackgroundImage";
 import Answer from "./Answer";
 
 const supabase = createClient(
@@ -14,7 +14,7 @@ const Flipbook = ({ file }) => {
   return (
     <div className="w-[100%] h-[100vh]">
       <iframe
-        src={`https://flipbook-rho.vercel.app?query=%22${"https://ovwhrngiaqsxmcbbkpbf.supabase.co/storage/v1/object/public/assets/uploads/Mirasol%20Factsheet-combined%20(3).pdf"}%22`}
+        src={`https://flipbook-rho.vercel.app?query=%22${"https://ovwhrngiaqsxmcbbkpbf.supabase.co/storage/v1/object/public/assets/uploads/Mirasol%20Digital%20Brochure_compressed.pdf"}%22`}
         className="w-[100%] h-[100vh]"
       ></iframe>
     </div>
@@ -172,7 +172,7 @@ const HomePage = () => {
         />
       )}
       {step === 1 && (
-        <div className="w-[100%] h-[100vh] relative flex items-center justify-center">
+        <div className="w-[100%] h-[100vh] bottom-9 relative flex items-center justify-center">
           <BackgroundImage />
           <Flipbook file={file} />
         </div>
