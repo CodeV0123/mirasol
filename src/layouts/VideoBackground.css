@@ -16,6 +16,7 @@
 
 .enter-button {
   position: absolute;
+  font-family: "Arial", sans-serif;
   bottom: 20%;
   left: 50%;
   transform: translateX(-50%);
