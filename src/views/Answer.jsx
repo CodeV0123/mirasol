@@ -287,8 +287,8 @@ const Answer = () => {
         />
         <canvas
           ref={canvasRef}
-          width="100"
-          height="100"
+          width="85"
+          height="85"
           className="absolute right-[-110px] bg-transparent"
         ></canvas>
       </div>
