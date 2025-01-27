@@ -14,7 +14,7 @@ const Flipbook = ({ file }) => {
   return (
     <div className="w-[100%] h-[100vh]">
       <iframe
-        src={`https://flipbook-rho.vercel.app?query=%22${"https://ovwhrngiaqsxmcbbkpbf.supabase.co/storage/v1/object/public/assets/uploads/Mirasol%20Factsheet-combined%20(3).pdf"}%22`}
+        src={`https://flipbook-rho.vercel.app?query=%22${"https://ovwhrngiaqsxmcbbkpbf.supabase.co/storage/v1/object/public/assets/uploads/Mirasol%20Digital%20Brochure_compressed.pdf"}%22`}
         className="w-[100%] h-[100vh]"
       ></iframe>
     </div>
