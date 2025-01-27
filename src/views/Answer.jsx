@@ -13,6 +13,7 @@ const Answer = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [show, setShow] = useState({ show: false, title: "", loading: false });
+  
 
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
