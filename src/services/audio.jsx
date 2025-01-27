@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "https://9d62c32ff3ec.ngrok.app/ask-question";
+const API_URL = "https://74cccb67ff26.ngrok.app/ask-question";
 
 export const fetchAudioResponse = createAsyncThunk(
   "audio/fetchAudioResponse",

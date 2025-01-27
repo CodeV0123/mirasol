@@ -6,15 +6,15 @@ import { Provider } from "react-redux";
 import HomePage from "./routes/home.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Loader from "./layouts/Loader.jsx";
-// import VideoBackground from "./layouts/VideoBackground.jsx";
+import VideoBackground from "./layouts/VideoBackground.jsx";
 
 const router = createBrowserRouter([
-  // {
-  //   path: "/",
-  //   element: <VideoBackground />,
-  // },
   {
     path: "/",
+    element: <VideoBackground />,
+  },
+  {
+    path: "/home",
     element: <HomePage />,
   },
 ]);
