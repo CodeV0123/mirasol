@@ -172,7 +172,7 @@ const HomePage = () => {
         />
       )}
       {step === 1 && (
-        <div className="w-[100%] h-[100vh] relative flex items-center justify-center">
+        <div className="w-[100%] h-[100vh] bottom-9 relative flex items-center justify-center">
           <BackgroundImage />
           <Flipbook file={file} />
         </div>
