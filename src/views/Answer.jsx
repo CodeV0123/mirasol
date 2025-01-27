@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAudioResponse } from "../services/audio";
 import { Conversation } from "@11labs/client";
@@ -14,6 +14,28 @@ const Answer = () => {
   const [isListening, setIsListening] = useState(false);
   const [show, setShow] = useState({ show: false, title: "", loading: false });
 
+  const canvasRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+
+  useEffect(() => {
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+
+    // Start visualization
+    if (canvasRef.current) {
+      visualize(analyser);
+    }
+
+    return () => {
+      if (audioContext) audioContext.close();
+    };
+  }, []);
   const { answer, error } = useSelector((state) => state.audio);
   const agentId = "fAkhxBgDoCISiufJiDOo";
 
@@ -53,7 +75,51 @@ const Answer = () => {
     if (!hasPermission) {
       return;
     }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioContextRef.current.createMediaStreamSource(stream);
+    source.connect(analyserRef.current);
+
     const signedUrl = await getSignedUrl();
+
+    visualize(analyserRef.current);
+
+    const websocket = new WebSocket(signedUrl);
+
+    websocket.onopen = () => {
+      setIsConnected(true);
+      console.log("WebSocket connected.");
+    };
+
+    websocket.onmessage = async (event) => {
+      if (event.data instanceof Blob) {
+        const arrayBuffer = await event.data.arrayBuffer();
+        const audioBuffer = await audioContextRef.current.decodeAudioData(
+          arrayBuffer
+        );
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+
+        // Connect to analyser for visualization
+        source.connect(analyserRef.current);
+        source.connect(audioContextRef.current.destination);
+
+        source.start(0);
+      } else {
+        console.log("Text response:", event.data);
+      }
+    };
+
+    websocket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      alert("An error occurred during the conversation.");
+    };
+
+    websocket.onclose = () => {
+      setIsConnected(false);
+      console.log("WebSocket closed.");
+    };
+
     const conversation = await Conversation.startSession({
       signedUrl,
       onConnect: () => {
@@ -76,6 +142,79 @@ const Answer = () => {
     setConversation(conversation);
   };
 
+  const visualize = (analyser) => {
+    const canvas = canvasRef.current;
+    const canvasCtx = canvas.getContext("2d");
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radiusBase = Math.min(width, height) / 4;
+
+      analyser.getByteFrequencyData(dataArray);
+
+      const maxIntensity = Math.max(...dataArray) / 255.0; // Normalized intensity
+      const dynamicRadius = radiusBase + maxIntensity * 20; // Dynamic pulsing
+
+      canvasCtx.clearRect(0, 0, width, height);
+
+      // Create dynamic gradient based on intensity
+      const gradient = canvasCtx.createRadialGradient(
+        centerX,
+        centerY,
+        dynamicRadius * 0.5,
+        centerX,
+        centerY,
+        dynamicRadius * 1.5
+      );
+      gradient.addColorStop(
+        0,
+        `rgba(${Math.floor(maxIntensity * 255)}, 100, 180, 1)`
+      );
+      gradient.addColorStop(1, "#002f1a");
+
+      canvasCtx.fillStyle = gradient;
+      canvasCtx.beginPath();
+
+      const angleStep = (Math.PI * 2) / bufferLength;
+      let angle = 0;
+
+      // Draw blob with dynamic scaling
+      for (let i = 0; i < bufferLength; i++) {
+        const value = dataArray[i] / 200.0;
+        const radius = dynamicRadius + value * 10; // React dynamically to frequency
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
+
+        angle += angleStep;
+      }
+
+      canvasCtx.closePath();
+      canvasCtx.fill();
+
+      // Add ripple effect with outer glow
+      canvasCtx.strokeStyle = `rgba(${Math.floor(
+        maxIntensity * 255
+      )}, 180, 240, 0.5)`;
+      canvasCtx.lineWidth = 2 + maxIntensity * 5; // Line width based on intensity
+      canvasCtx.stroke();
+
+      // Smooth animation
+      requestAnimationFrame(draw);
+    };
+    draw();
+  };
+
   const handleGenerate = async (question) => {
     setShow({ show: true, loading: true, title: "" });
     try {
@@ -91,11 +230,7 @@ const Answer = () => {
   useEffect(() => {
     if (answer) {
       setShow({ show: true, loading: false, title: answer });
-      // playAudio(answer);
     }
-    // return () => {
-    //   dispatch(clearAudioState()); // Clean up audio state when the component unmounts
-    // };
   }, [answer, dispatch]);
 
   return (
@@ -150,6 +285,12 @@ const Answer = () => {
           }`}
           onClick={startConversation}
         />
+        <canvas
+          ref={canvasRef}
+          width="100"
+          height="100"
+          className="absolute right-[-110px] bg-transparent"
+        ></canvas>
       </div>
       {error && <p className="text-red-500">Error: {error}</p>}
     </div>
