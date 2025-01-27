@@ -33,6 +33,7 @@ const VideoBackground = () => {
         src="/MIRASOL.mp4"
         autoPlay
         muted
+        playsInline
         loop={false}
       />
       {showButton && (
