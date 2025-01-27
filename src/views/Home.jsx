@@ -88,7 +88,7 @@ const Loader = () => {
 const HomePage = () => {
   const [step, setStep] = useState(1);
   const [file, setFile] = useState();
-  const [fileId, setFileId] = useState("asdasd");
+  const [fileId, setFileId] = useState("asda");
   const [loader, setLoader] = useState(false);
 
   // const analyze_documents = async (user_id, files) => {
