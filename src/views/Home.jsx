@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Dropzone from "react-dropzone";
 import { createClient } from "@supabase/supabase-js";
-import BackgroundVideo from "../layouts/BackgroundVideo";
+import BackgroundImage from "../layouts/BackgroundVideo";
 import Answer from "./Answer";
 
 const supabase = createClient(
@@ -96,8 +96,7 @@ const HomePage = () => {
   // };
 
   return (
-    <div className="w-[100%] h-[100vh] bg-[#454545]">
-      <BackgroundVideo />
+    <div className="w-[100%] h-[100vh]">
       {loader && <Loader />}
       {step === 0 && (
         <Dropped
@@ -174,6 +173,7 @@ const HomePage = () => {
       )}
       {step === 1 && (
         <div className="w-[100%] h-[100vh] relative flex items-center justify-center">
+          <BackgroundImage />
           <Flipbook file={file} />
         </div>
       )}
